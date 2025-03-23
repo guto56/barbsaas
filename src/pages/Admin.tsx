@@ -17,6 +17,17 @@ interface Appointment {
   status: string;
 }
 
+interface AppointmentData {
+  id: string;
+  user_id: string;
+  date: string;
+  time: string;
+  status: string;
+  profiles: {
+    display_name: string;
+  }[];
+}
+
 export default function Admin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -37,7 +48,7 @@ export default function Admin() {
           date,
           time,
           status,
-          profiles!appointments_user_id_fkey (
+          profiles:user_id (
             display_name
           )
         `)
@@ -47,13 +58,13 @@ export default function Admin() {
       if (error) throw error;
 
       // Transform the data to match the Appointment interface
-      const transformedAppointments = appointmentsData.map(apt => ({
+      const transformedAppointments = (appointmentsData as AppointmentData[]).map(apt => ({
         ...apt,
         profiles: {
-          display_name: apt.profiles?.[0]?.display_name || 'Sem nome'
+          display_name: apt.profiles[0]?.display_name || 'Sem nome'
         }
       }));
-      setInterval(fetchAppointments, 1000)
+
       setAppointments(transformedAppointments);
     } catch (error: any) {
       console.error('Error fetching appointments:', error);
@@ -201,7 +212,7 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.profiles.display_name}
+                      Cliente: {appointment.profiles?.display_name || 'Sem nome'}
                     </p>
                     <p className="text-gray-600">
                       Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
