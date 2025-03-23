@@ -25,7 +25,7 @@ export default function Navigation() {
           </Link>
           <Link to="/schedule" className="flex items-center space-x-2 text-gray-700 hover:text-black">
             <Calendar size={20} />
-            <span>Agendar Corte</span>
+            <span>Agendar</span>
           </Link>
         </div>
         <button
