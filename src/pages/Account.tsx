@@ -138,7 +138,12 @@ export default function Account() {
       // Sign out
       await supabase.auth.signOut();
       toast.success('Conta deletada com sucesso');
-      navigate('/register');
+      
+      // Wait 1 second before redirecting
+      setTimeout(() => {
+        navigate('/register');
+      }, 1000);
+      
     } catch (error: any) {
       toast.error(error.message);
     } finally {
