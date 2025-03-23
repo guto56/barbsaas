@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -9,10 +9,12 @@ import toast from 'react-hot-toast';
 interface Appointment {
   id: string;
   user_id: string;
+  profiles: {
+    display_name: string;
+  };
   date: string;
   time: string;
   status: string;
-  user_email: string;
 }
 
 export default function Admin() {
@@ -25,42 +27,6 @@ export default function Admin() {
     password: '',
   });
 
-  const fetchAppointments = async () => {
-    try {
-      // Primeiro, buscar os agendamentos
-      const { data: appointmentsData, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('status', 'scheduled')
-        .order('date', { ascending: true });
-
-      if (appointmentsError) throw appointmentsError;
-
-      // Depois, buscar os emails dos usuários
-      const userIds = appointmentsData?.map(apt => apt.user_id) || [];
-      const { data: usersData, error: usersError } = await supabase
-        .from('auth.users')
-        .select('id, email')
-        .in('id', userIds);
-
-      if (usersError) throw usersError;
-
-      // Criar um mapa de user_id para email
-      const userEmails = new Map(usersData?.map(user => [user.id, user.email]) || []);
-
-      // Combinar os dados
-      const transformedAppointments = (appointmentsData || []).map(apt => ({
-        ...apt,
-        user_email: userEmails.get(apt.user_id) || 'Email não disponível'
-      }));
-
-      setAppointments(transformedAppointments);
-    } catch (error: any) {
-      console.error('Erro ao buscar agendamentos:', error);
-      toast.error('Erro ao carregar agendamentos');
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -70,7 +36,32 @@ export default function Admin() {
         throw new Error('Credenciais inválidas');
       }
 
-      await fetchAppointments();
+      const { data: appointmentsData, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          user_id,
+          date,
+          time,
+          status,
+          profiles!appointments_user_id_fkey (
+            display_name
+          )
+        `)
+        .eq('status', 'scheduled')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform the data to match the Appointment interface
+      const transformedAppointments = appointmentsData.map(apt => ({
+        ...apt,
+        profiles: {
+          display_name: apt.profiles?.display_name || 'Sem nome'
+        }
+      }));
+
+      setAppointments(transformedAppointments);
       setAuthenticated(true);
     } catch (error: any) {
       toast.error(error.message);
@@ -178,7 +169,7 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.user_email}
+                      Cliente: {appointment.profiles.display_name}
                     </p>
                     <p className="text-gray-600">
                       Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
