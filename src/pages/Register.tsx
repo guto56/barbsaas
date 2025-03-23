@@ -30,8 +30,8 @@ export default function Register() {
           {
             id: data.user.id,
             user_id: data.user.id,
-            display_name: formData.name,
-            bio: ''
+            display_name: formData.email,
+            bio: formData.name
           },
         ]);
 
