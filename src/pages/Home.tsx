@@ -130,7 +130,7 @@ export default function HomePage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Bem-vindo, {profile?.display_name || 'Usuário'}!
+              Bem-vindo, {profile?.bio || 'Usuário'}!
             </h2>
             <div className="mt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
