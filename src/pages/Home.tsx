@@ -23,39 +23,49 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
+  const fetchUserData = async () => {
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get user's profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+      setProfile(profileData);
+
+      // Get user's appointments using profile id
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', profileData.id)
+        .eq('status', 'scheduled')
+        .order('date', { ascending: true });
+
+      if (appointmentsError) throw appointmentsError;
+      setAppointments(appointmentsData || []);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  // Fetch data every 30 seconds
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // Get current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Get user's profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-        setProfile(profileData);
-
-        // Get user's appointments using profile id
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('user_id', profileData.id)
-          .eq('status', 'scheduled')
-          .order('date', { ascending: true });
-
-        if (appointmentsError) throw appointmentsError;
-        setAppointments(appointmentsData || []);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
+    // Fetch immediately
     fetchUserData();
+
+    // Set up interval for periodic updates
+    const intervalId = setInterval(fetchUserData, 1000); // 30 seconds
+
+    // Cleanup interval on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
