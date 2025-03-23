@@ -9,12 +9,12 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link to="/" className="text-xl font-bold text-gray-900">
+              <Link to="/home" className="text-xl font-bold text-gray-900">
                 Barbearia
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <Link to="/" className="flex items-center space-x-2 text-gray-700 hover:text-black">
+              <Link to="/home" className="flex items-center space-x-2 text-gray-700 hover:text-black">
                 <Home size={20} />
                 <span>Início</span>
               </Link>

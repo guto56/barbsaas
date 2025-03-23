@@ -8,6 +8,7 @@ import Account from './pages/Account';
 import Schedule from './pages/Schedule';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatSchedule from './pages/ChatSchedule';
 
 function App() {
   return (
