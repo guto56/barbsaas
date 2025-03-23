@@ -4,7 +4,8 @@ import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Home as HomeIcon, User, Calendar, LogOut } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface Appointment {
   id: string;
@@ -22,6 +23,7 @@ interface Profile {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
@@ -70,9 +72,60 @@ export default function HomePage() {
     };
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success('Logout realizado com sucesso!');
+      window.location.href = 'https://barbsaas.vercel.app';
+    } catch (error: any) {
+      toast.error('Erro ao fazer logout');
+      console.error('Erro:', error.message);
+    }
+  };
+
   return (
     <div>
-      <Navigation />
+      <nav className="bg-white shadow-lg">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Link to="/home" className="text-xl font-bold text-gray-900">
+                  Barbearia
+                </Link>
+              </div>
+            </div>
+            <div className="flex space-x-8">
+              <Link
+                to="/home"
+                className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
+              >
+                <HomeIcon className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/account"
+                className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
+              >
+                <User className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/schedule"
+                className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
+              >
+                <Calendar className="h-5 w-5" />
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white rounded-lg shadow-lg p-6">
