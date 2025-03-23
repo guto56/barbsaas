@@ -53,11 +53,21 @@ export default function Admin() {
 
       if (error) throw error;
 
+      // Get user emails
+      const userIds = appointmentsData.map(apt => apt.user_id);
+      const { data: usersData } = await supabase
+        .from('profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds);
+
+      // Create a map of user_id to email
+      const userEmails = new Map(usersData?.map(user => [user.user_id, user.display_name]) || []);
+
       // Transform the data to match the Appointment interface
       const transformedAppointments = appointmentsData.map(apt => ({
         ...apt,
         profiles: {
-          display_name: apt.profiles[0]?.display_name || 'Sem nome'
+          display_name: userEmails.get(apt.user_id) || 'Email não disponível'
         }
       }));
 
