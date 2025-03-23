@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -10,22 +10,11 @@ interface Appointment {
   id: string;
   user_id: string;
   profiles: {
-    name: string;
+    display_name: string;
   };
   date: string;
   time: string;
   status: string;
-}
-
-interface AppointmentData {
-  id: string;
-  user_id: string;
-  date: string;
-  time: string;
-  status: string;
-  profiles: {
-    name: string;
-  }[];
 }
 
 export default function Admin() {
@@ -38,59 +27,6 @@ export default function Admin() {
     password: '',
   });
 
-  const fetchAppointments = async () => {
-    try {
-      const { data: appointmentsData, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          user_id,
-          date,
-          time,
-          status,
-          profiles:user_id (
-            name
-          )
-        `)
-        .eq('status', 'scheduled')
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-
-      // Transform the data to match the Appointment interface
-      const transformedAppointments = (appointmentsData as AppointmentData[]).map(apt => ({
-        ...apt,
-        profiles: {
-          name: apt.profiles[0]?.name || 'Sem nome'
-        }
-      }));
-
-      setAppointments(transformedAppointments);
-    } catch (error: any) {
-      console.error('Error fetching appointments:', error);
-    }
-  };
-
-  // Fetch appointments every 30 seconds when authenticated
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (authenticated) {
-      // Fetch immediately
-      fetchAppointments();
-      
-      // Then set up the interval
-      intervalId = setInterval(fetchAppointments, 30000); // 30 seconds
-    }
-
-    // Cleanup interval on unmount or when authentication changes
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [authenticated]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -100,7 +36,32 @@ export default function Admin() {
         throw new Error('Credenciais inválidas');
       }
 
-      await fetchAppointments();
+      const { data: appointmentsData, error } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          user_id,
+          date,
+          time,
+          status,
+          profiles!appointments_user_id_fkey (
+            display_name
+          )
+        `)
+        .eq('status', 'scheduled')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform the data to match the Appointment interface
+      const transformedAppointments = appointmentsData.map(apt => ({
+        ...apt,
+        profiles: {
+          display_name: apt.profiles?.display_name || 'Sem nome'
+        }
+      }));
+
+      setAppointments(transformedAppointments);
       setAuthenticated(true);
     } catch (error: any) {
       toast.error(error.message);
@@ -118,12 +79,8 @@ export default function Admin() {
 
       if (error) throw error;
 
-      // Update local state immediately
       setAppointments(appointments.filter(app => app.id !== id));
       toast.success('Agendamento cancelado com sucesso!');
-      
-      // Fetch fresh data to ensure consistency
-      await fetchAppointments();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -212,7 +169,7 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.profiles?.name || 'Sem nome'}
+                      Cliente: {appointment.profiles.display_name}
                     </p>
                     <p className="text-gray-600">
                       Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
