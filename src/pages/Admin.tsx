@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
 interface Appointment {
@@ -51,7 +53,15 @@ export default function Admin() {
 
       if (error) throw error;
 
-      setAppointments(appointmentsData);
+      // Transform the data to match the Appointment interface
+      const transformedAppointments = appointmentsData.map(apt => ({
+        ...apt,
+        profiles: {
+          display_name: apt.profiles?.display_name || 'Sem nome'
+        }
+      }));
+
+      setAppointments(transformedAppointments);
       setAuthenticated(true);
     } catch (error: any) {
       toast.error(error.message);
@@ -159,10 +169,10 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.profiles.display_name || 'Sem nome'}
+                      Cliente: {appointment.profiles.display_name}
                     </p>
                     <p className="text-gray-600">
-                      Data: {new Date(appointment.date).toLocaleDateString()}
+                      Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                     </p>
                     <p className="text-gray-600">
                       Horário: {appointment.time.slice(0, 5)}
