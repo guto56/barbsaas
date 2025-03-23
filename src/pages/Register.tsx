@@ -11,7 +11,6 @@ export default function Register() {
     name: '',
     email: '',
     password: '',
-    site_username: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,9 +29,9 @@ export default function Register() {
         await supabase.from('profiles').insert([
           {
             id: data.user.id,
-            name: formData.name,
-            email: formData.email,
-            site_username: formData.site_username
+            user_id: data.user.id,
+            display_name: formData.name,
+            bio: ''
           },
         ]);
 
@@ -64,16 +63,6 @@ export default function Register() {
                 placeholder="Nome completo"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div>
-              <input
-                type="text"
-                required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Nome de usuário"
-                value={formData.site_username}
-                onChange={(e) => setFormData({ ...formData, site_username: e.target.value })}
               />
             </div>
             <div>

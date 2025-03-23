@@ -6,8 +6,8 @@ import toast from 'react-hot-toast';
 interface Profile {
   id: string;
   user_id: string;
-  email: string;
-  site_username: string;
+  display_name: string;
+  bio: string;
 }
 
 export default function Account() {
@@ -15,8 +15,8 @@ export default function Account() {
   const [profile, setProfile] = useState<Profile>({
     id: '',
     user_id: '',
-    email: '',
-    site_username: ''
+    display_name: '',
+    bio: ''
   });
   const [newPassword, setNewPassword] = useState('');
 
@@ -28,7 +28,7 @@ export default function Account() {
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, user_id, email, site_username')
+          .select('*')
           .eq('user_id', user.id)
           .single();
         
@@ -40,8 +40,8 @@ export default function Account() {
               .insert([
                 {
                   user_id: user.id,
-                  email: user.email,
-                  site_username: user.email?.split('@')[0] || 'usuario'
+                  display_name: user.email,
+                  bio: ''
                 }
               ])
               .select('*')
@@ -77,7 +77,8 @@ export default function Account() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          site_username: profile.site_username
+          display_name: profile.display_name,
+          bio: profile.bio
         })
         .eq('user_id', user.id);
 
@@ -109,24 +110,24 @@ export default function Account() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  disabled
-                  className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  value={profile.email}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Nome de Usuário
+                  Nome de Exibição
                 </label>
                 <input
                   type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  value={profile.site_username}
-                  onChange={(e) => setProfile({ ...profile, site_username: e.target.value })}
+                  value={profile.display_name}
+                  onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Bio
+                </label>
+                <textarea
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  rows={3}
+                  value={profile.bio || ''}
+                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                 />
               </div>
               <div>
