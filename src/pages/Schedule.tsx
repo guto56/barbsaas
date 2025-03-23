@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
-import { format, addDays, isBefore, startOfDay, isWeekend, getDay, parseISO, setHours, setMinutes } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, isWeekend, getDay, parseISO, setHours, setMinutes, startOfDay as startOfDayFn } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
@@ -41,7 +41,7 @@ export default function Schedule() {
       if (!selectedDate) return;
 
       // Format date in YYYY-MM-DD format for database query
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const formattedDate = format(startOfDayFn(selectedDate), 'yyyy-MM-dd');
       const { data: appointments } = await supabase
         .from('appointments')
         .select('time')
@@ -77,12 +77,8 @@ export default function Schedule() {
     setLoading(true);
 
     try {
-      // Create a new date object with the selected date and time
-      const [hours, minutes] = selectedTime.split(':').map(Number);
-      const appointmentDate = setMinutes(setHours(selectedDate, hours), minutes);
-
       // Format the date in YYYY-MM-DD format for database storage
-      const formattedDate = format(appointmentDate, 'yyyy-MM-dd');
+      const formattedDate = format(startOfDayFn(selectedDate), 'yyyy-MM-dd');
 
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 interface Appointment {
@@ -44,7 +44,7 @@ export default function Home() {
         const { data: appointmentsData, error: appointmentsError } = await supabase
           .from('appointments')
           .select('*')
-          .eq('user_id', profileData.id) // Using profile.id instead of user.id
+          .eq('user_id', profileData.id)
           .eq('status', 'scheduled')
           .order('date', { ascending: true });
 
@@ -79,7 +79,7 @@ export default function Home() {
                       className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                     >
                       <p className="text-gray-900">
-                        Dia: {format(new Date(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                        Dia: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                       </p>
                       <p className="text-gray-900">
                         Horário: {appointment.time.slice(0, 5)}
