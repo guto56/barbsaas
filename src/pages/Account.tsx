@@ -6,10 +6,8 @@ import toast from 'react-hot-toast';
 interface Profile {
   id: string;
   user_id: string;
-  display_name: string;
-  site_username: string;
-  name: string;
   email: string;
+  site_username: string;
 }
 
 export default function Account() {
@@ -17,10 +15,8 @@ export default function Account() {
   const [profile, setProfile] = useState<Profile>({
     id: '',
     user_id: '',
-    display_name: '',
-    site_username: '',
-    name: '',
-    email: ''
+    email: '',
+    site_username: ''
   });
   const [newPassword, setNewPassword] = useState('');
 
@@ -32,39 +28,38 @@ export default function Account() {
 
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('id, user_id, email, site_username')
           .eq('user_id', user.id)
           .single();
         
-        if (error) throw error;
+        if (error) {
+          // Se não encontrar o perfil, cria um novo
+          if (error.code === 'PGRST116') {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert([
+                {
+                  user_id: user.id,
+                  email: user.email,
+                  site_username: user.email?.split('@')[0] || 'usuario'
+                }
+              ])
+              .select('*')
+              .single();
+
+            if (createError) throw createError;
+            if (newProfile) setProfile(newProfile);
+            return;
+          }
+          throw error;
+        }
         
         if (data) {
-          setProfile({
-            ...data,
-            display_name: data.email || user.email || '',
-            site_username: data.site_username || data.name || user.email?.split('@')[0] || 'usuario'
-          });
-        } else {
-          const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
-            .insert([
-              {
-                user_id: user.id,
-                name: user.email?.split('@')[0] || 'usuario',
-                email: user.email,
-                site_username: user.email?.split('@')[0] || 'usuario',
-                display_name: user.email
-              }
-            ])
-            .select('*')
-            .single();
-
-          if (createError) throw createError;
-          if (newProfile) setProfile(newProfile);
+          setProfile(data);
         }
       } catch (error: any) {
+        console.error('Error:', error);
         toast.error('Erro ao carregar perfil');
-        console.error('Error:', error.message);
       }
     };
 
@@ -82,8 +77,6 @@ export default function Account() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          name: profile.site_username,
-          email: profile.display_name,
           site_username: profile.site_username
         })
         .eq('user_id', user.id);
@@ -122,8 +115,7 @@ export default function Account() {
                   type="email"
                   disabled
                   className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  value={profile.email || profile.display_name}
-                  onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                  value={profile.email}
                 />
               </div>
               <div>
