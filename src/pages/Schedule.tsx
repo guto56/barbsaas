@@ -103,7 +103,7 @@ export default function Schedule() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              Agendar Corte
+              Agendar
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
