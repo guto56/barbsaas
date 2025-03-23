@@ -27,7 +27,54 @@ export default function ChatSchedule() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    loadChatHistory();
+  }, []);
+
+  const loadChatHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: history, error } = await supabase
+        .from('chat_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (history && history.length > 0) {
+        const formattedMessages = history.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        }));
+        setMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+    }
+  };
+
+  const saveMessage = async (role: 'user' | 'assistant', content: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('chat_history')
+        .insert([
+          {
+            user_id: user.id,
+            role,
+            content
+          }
+        ]);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Erro ao salvar mensagem:', error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +83,12 @@ export default function ChatSchedule() {
     const userMessage = inputMessage.trim();
     setInputMessage('');
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    await saveMessage('user', userMessage);
     setLoading(true);
 
     try {
       // Chamar a API do DeepSeek
-      const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      const response = await fetch(process.env.REACT_APP_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,10 +133,9 @@ export default function ChatSchedule() {
           .single();
 
         if (existingAppointment) {
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: 'Desculpe, este horário já está reservado. Por favor, escolha outro horário.'
-          }]);
+          const errorMessage = 'Desculpe, este horário já está reservado. Por favor, escolha outro horário.';
+          setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
+          await saveMessage('assistant', errorMessage);
           return;
         }
 
@@ -137,22 +184,18 @@ export default function ChatSchedule() {
 
         if (appointmentError) throw appointmentError;
 
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: `Perfeito! Seu agendamento foi realizado com sucesso para ${date} às ${time}.`
-        }]);
+        const successMessage = `Perfeito! Seu agendamento foi realizado com sucesso para ${date} às ${time}.`;
+        setMessages(prev => [...prev, { role: 'assistant', content: successMessage }]);
+        await saveMessage('assistant', successMessage);
       } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: assistantMessage
-        }]);
+        setMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
+        await saveMessage('assistant', assistantMessage);
       }
     } catch (error: any) {
       console.error('Erro:', error);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.'
-      }]);
+      const errorMessage = 'Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.';
+      setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
+      await saveMessage('assistant', errorMessage);
     } finally {
       setLoading(false);
     }
