@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -27,15 +27,8 @@ export default function Admin() {
     password: '',
   });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const fetchAppointments = async () => {
     try {
-      if (formData.username !== 'adminbarber' || formData.password !== 'byguto') {
-        throw new Error('Credenciais inválidas');
-      }
-
       const { data: appointmentsData, error } = await supabase
         .from('appointments')
         .select(`
@@ -53,7 +46,6 @@ export default function Admin() {
 
       if (error) throw error;
 
-      // Transform the data to match the Appointment interface
       const transformedAppointments = appointmentsData.map(apt => ({
         ...apt,
         profiles: {
@@ -62,6 +54,38 @@ export default function Admin() {
       })) as Appointment[];
 
       setAppointments(transformedAppointments);
+    } catch (error: any) {
+      console.error('Erro ao buscar agendamentos:', error);
+      toast.error('Erro ao carregar agendamentos');
+    }
+  };
+
+  // Atualização automática a cada 1 segundo (como na Home)
+  useEffect(() => {
+    if (authenticated) {
+      // Buscar dados imediatamente
+      fetchAppointments();
+
+      // Configurar intervalo para atualizações periódicas (1 segundo como na Home)
+      const intervalId = setInterval(fetchAppointments, 1000);
+
+      // Limpar intervalo ao desmontar
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [authenticated]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (formData.username !== 'adminbarber' || formData.password !== 'byguto') {
+        throw new Error('Credenciais inválidas');
+      }
+
+      await fetchAppointments(); // Buscar dados imediatamente após login
       setAuthenticated(true);
     } catch (error: any) {
       toast.error(error.message);
