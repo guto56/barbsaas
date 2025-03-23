@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Scissors } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -27,15 +27,8 @@ export default function Admin() {
     password: '',
   });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const fetchAppointments = async () => {
     try {
-      if (formData.username !== 'adminbarber' || formData.password !== 'byguto') {
-        throw new Error('Credenciais inválidas');
-      }
-
       const { data: appointmentsData, error } = await supabase
         .from('appointments')
         .select(`
@@ -57,11 +50,46 @@ export default function Admin() {
       const transformedAppointments = appointmentsData.map(apt => ({
         ...apt,
         profiles: {
-          display_name: apt.profiles?.display_name || 'Sem nome'
+          display_name: apt.profiles?.[0]?.display_name || 'Sem nome'
         }
       }));
-
+      setInterval(fetchAppointments, 1000)
       setAppointments(transformedAppointments);
+    } catch (error: any) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+
+  // Fetch appointments every 30 seconds when authenticated
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (authenticated) {
+      // Fetch immediately
+      fetchAppointments();
+      
+      // Then set up the interval
+      intervalId = setInterval(fetchAppointments, 30000); // 30 seconds
+    }
+
+    // Cleanup interval on unmount or when authentication changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [authenticated]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (formData.username !== 'adminbarber' || formData.password !== 'byguto') {
+        throw new Error('Credenciais inválidas');
+      }
+
+      await fetchAppointments();
       setAuthenticated(true);
     } catch (error: any) {
       toast.error(error.message);
@@ -79,8 +107,12 @@ export default function Admin() {
 
       if (error) throw error;
 
+      // Update local state immediately
       setAppointments(appointments.filter(app => app.id !== id));
       toast.success('Agendamento cancelado com sucesso!');
+      
+      // Fetch fresh data to ensure consistency
+      await fetchAppointments();
     } catch (error: any) {
       toast.error(error.message);
     }
