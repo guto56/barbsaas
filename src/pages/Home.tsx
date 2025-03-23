@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Home, User, Calendar, LogOut } from 'lucide-react';
+import { Home as HomeIcon, User, Calendar, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Appointment {
@@ -21,7 +21,7 @@ interface Profile {
   bio: string;
 }
 
-export default function Home() {
+export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
