@@ -6,18 +6,13 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
-interface Profile {
-  display_name: string;
-  email: string;
-}
-
 interface Appointment {
   id: string;
   user_id: string;
   date: string;
   time: string;
   status: string;
-  profiles: Profile;
+  user_email: string;
 }
 
 export default function Admin() {
@@ -32,31 +27,31 @@ export default function Admin() {
 
   const fetchAppointments = async () => {
     try {
-      const { data: appointmentsData, error } = await supabase
+      // Primeiro, buscar os agendamentos
+      const { data: appointmentsData, error: appointmentsError } = await supabase
         .from('appointments')
-        .select(`
-          id,
-          user_id,
-          date,
-          time,
-          status,
-          profiles!appointments_user_id_fkey (
-            display_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('status', 'scheduled')
         .order('date', { ascending: true });
 
-      if (error) throw error;
+      if (appointmentsError) throw appointmentsError;
 
-      // Transformar os dados para garantir a tipagem correta
+      // Depois, buscar os emails dos usuários
+      const userIds = appointmentsData?.map(apt => apt.user_id) || [];
+      const { data: usersData, error: usersError } = await supabase
+        .from('auth.users')
+        .select('id, email')
+        .in('id', userIds);
+
+      if (usersError) throw usersError;
+
+      // Criar um mapa de user_id para email
+      const userEmails = new Map(usersData?.map(user => [user.id, user.email]) || []);
+
+      // Combinar os dados
       const transformedAppointments = (appointmentsData || []).map(apt => ({
         ...apt,
-        profiles: {
-          display_name: apt.profiles?.[0]?.display_name || '',
-          email: apt.profiles?.[0]?.email || ''
-        }
+        user_email: userEmails.get(apt.user_id) || 'Email não disponível'
       }));
 
       setAppointments(transformedAppointments);
@@ -183,7 +178,7 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.profiles.display_name || appointment.profiles.email}
+                      Cliente: {appointment.user_email}
                     </p>
                     <p className="text-gray-600">
                       Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
