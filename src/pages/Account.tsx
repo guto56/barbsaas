@@ -135,15 +135,10 @@ export default function Account() {
       const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
       if (deleteError) throw deleteError;
 
-      // Sign out
+      // Sign out and redirect immediately
       await supabase.auth.signOut();
       toast.success('Conta deletada com sucesso');
-      
-      // Wait 1 second before redirecting
-      setTimeout(() => {
-        navigate('/register');
-      }, 1000);
-      
+      navigate('/register'); // Redirecionamento imediato
     } catch (error: any) {
       toast.error(error.message);
     } finally {
