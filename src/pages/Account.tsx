@@ -123,6 +123,9 @@ export default function Account() {
         throw new Error('Senha incorreta');
       }
 
+      // Redireciona imediatamente após verificar a senha
+      navigate('/register');
+
       // Delete profile first
       const { error: profileError } = await supabase
         .from('profiles')
@@ -135,10 +138,9 @@ export default function Account() {
       const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id);
       if (deleteError) throw deleteError;
 
-      // Sign out and redirect immediately
+      // Sign out
       await supabase.auth.signOut();
       toast.success('Conta deletada com sucesso');
-      navigate('/register'); // Redirecionamento imediato
     } catch (error: any) {
       toast.error(error.message);
     } finally {
