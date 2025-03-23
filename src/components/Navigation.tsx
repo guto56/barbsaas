@@ -23,9 +23,17 @@ export default function Navigation() {
             <User size={20} />
             <span>Conta</span>
           </Link>
-          <Link to="/schedule" className="flex items-center space-x-2 text-gray-700 hover:text-black">
-            <Calendar size={20} />
-            <span>Agendar</span>
+          <Link
+            to="/schedule"
+            className="text-gray-900 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+          >
+            Agendar
+          </Link>
+          <Link
+            to="/chat-schedule"
+            className="text-gray-900 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+          >
+            Agendar via Chat
           </Link>
         </div>
         <button

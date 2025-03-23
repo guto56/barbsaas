@@ -8,6 +8,7 @@ import Account from './pages/Account';
 import Schedule from './pages/Schedule';
 import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
+import ChatSchedule from './pages/ChatSchedule';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/home" element={<Home />} />
             <Route path="/account" element={<Account />} />
             <Route path="/schedule" element={<Schedule />} />
+            <Route path="/chat-schedule" element={<ChatSchedule />} />
           </Route>
         </Routes>
       </div>
