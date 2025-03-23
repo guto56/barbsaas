@@ -57,7 +57,7 @@ export default function Admin() {
       const transformedAppointments = appointmentsData.map(apt => ({
         ...apt,
         profiles: {
-          display_name: apt.profiles?.display_name || 'Sem nome'
+          display_name: apt.profiles[0]?.display_name || 'Sem nome'
         }
       }));
 
