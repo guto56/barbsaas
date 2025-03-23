@@ -1,21 +1,17 @@
 import React, { useState } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
-import { format, addDays } from 'date-fns';
+import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { DayPicker } from 'react-day-picker';
+import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
 
 const AVAILABLE_HOURS = Array.from({ length: 9 }, (_, i) => `${i + 14}:00`);
 
 export default function Schedule() {
   const [loading, setLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState('');
-
-  // Get next 30 days for date selection
-  const availableDates = Array.from({ length: 30 }, (_, i) => {
-    const date = addDays(new Date(), i + 1);
-    return format(date, 'yyyy-MM-dd');
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,11 +23,13 @@ export default function Schedule() {
     setLoading(true);
 
     try {
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+
       // Check if the time slot is available
       const { data: existingAppointment } = await supabase
         .from('appointments')
         .select('id')
-        .eq('date', selectedDate)
+        .eq('date', formattedDate)
         .eq('time', selectedTime)
         .eq('status', 'scheduled')
         .single();
@@ -62,7 +60,7 @@ export default function Schedule() {
           .insert([
             {
               user_id: user.id,
-              display_name: user.email // ou outro valor padrão
+              display_name: user.email
             }
           ])
           .select('id')
@@ -77,8 +75,8 @@ export default function Schedule() {
         .from('appointments')
         .insert([
           {
-            user_id: profileId, // Usando o ID do perfil aqui
-            date: selectedDate,
+            user_id: profileId,
+            date: formattedDate,
             time: selectedTime,
             status: 'scheduled'
           },
@@ -87,7 +85,7 @@ export default function Schedule() {
       if (appointmentError) throw appointmentError;
 
       toast.success('Agendamento realizado com sucesso!');
-      setSelectedDate('');
+      setSelectedDate(undefined);
       setSelectedTime('');
     } catch (error: any) {
       toast.error(error.message);
@@ -107,21 +105,40 @@ export default function Schedule() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Selecione a data
                 </label>
-                <select
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="">Selecione uma data</option>
-                  {availableDates.map((date) => (
-                    <option key={date} value={date}>
-                      {format(new Date(date), 'dd/MM/yyyy')}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex justify-center">
+                  <DayPicker
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                    className="border rounded-lg p-4"
+                    classNames={{
+                      months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+                      month: "space-y-4",
+                      caption: "flex justify-center pt-1 relative items-center",
+                      caption_label: "text-sm font-medium",
+                      nav: "space-x-1 flex items-center",
+                      nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+                      nav_button_previous: "absolute left-1",
+                      nav_button_next: "absolute right-1",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex",
+                      head_cell: "text-gray-500 rounded-md w-9 font-normal text-[0.8rem]",
+                      row: "flex w-full mt-2",
+                      cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-gray-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      day: "h-9 w-9 p-0 font-normal aria-selected:opacity-100",
+                      day_selected: "bg-gray-900 text-white hover:bg-gray-900 focus:bg-gray-900",
+                      day_today: "bg-gray-100 text-gray-900",
+                      day_outside: "text-gray-400 opacity-50",
+                      day_disabled: "text-gray-400 opacity-50",
+                      day_range_middle: "aria-selected:bg-gray-100 aria-selected:text-gray-900",
+                      day_hidden: "invisible",
+                    }}
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
