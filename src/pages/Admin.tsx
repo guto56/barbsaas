@@ -6,16 +6,18 @@ import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 
+interface Profile {
+  display_name: string;
+  email: string;
+}
+
 interface Appointment {
   id: string;
   user_id: string;
   date: string;
   time: string;
   status: string;
-  profiles: {
-    display_name: string;
-    email: string;
-  };
+  profiles: Profile;
 }
 
 export default function Admin() {
@@ -38,7 +40,7 @@ export default function Admin() {
           date,
           time,
           status,
-          profiles:user_id (
+          profiles!appointments_user_id_fkey (
             display_name,
             email
           )
