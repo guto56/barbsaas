@@ -8,6 +8,8 @@ interface Profile {
   user_id: string;
   display_name: string;
   site_username: string;
+  name: string;
+  email: string;
 }
 
 export default function Account() {
@@ -16,7 +18,9 @@ export default function Account() {
     id: '',
     user_id: '',
     display_name: '',
-    site_username: ''
+    site_username: '',
+    name: '',
+    email: ''
   });
   const [newPassword, setNewPassword] = useState('');
 
@@ -35,15 +39,21 @@ export default function Account() {
         if (error) throw error;
         
         if (data) {
-          setProfile(data);
+          setProfile({
+            ...data,
+            display_name: data.email || user.email || '',
+            site_username: data.site_username || data.name || user.email?.split('@')[0] || 'usuario'
+          });
         } else {
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert([
               {
                 user_id: user.id,
-                display_name: user.email,
-                site_username: user.email?.split('@')[0] || 'usuario'
+                name: user.email?.split('@')[0] || 'usuario',
+                email: user.email,
+                site_username: user.email?.split('@')[0] || 'usuario',
+                display_name: user.email
               }
             ])
             .select('*')
@@ -72,7 +82,8 @@ export default function Account() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          display_name: profile.display_name,
+          name: profile.site_username,
+          email: profile.display_name,
           site_username: profile.site_username
         })
         .eq('user_id', user.id);
@@ -111,7 +122,7 @@ export default function Account() {
                   type="email"
                   disabled
                   className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  value={profile.display_name}
+                  value={profile.email || profile.display_name}
                   onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
                 />
               </div>
@@ -122,7 +133,7 @@ export default function Account() {
                 <input
                   type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  value={profile.site_username || ''}
+                  value={profile.site_username}
                   onChange={(e) => setProfile({ ...profile, site_username: e.target.value })}
                 />
               </div>
