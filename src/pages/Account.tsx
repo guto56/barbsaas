@@ -7,7 +7,7 @@ interface Profile {
   id: string;
   user_id: string;
   display_name: string;
-  bio: string;
+  site_username: string;
 }
 
 export default function Account() {
@@ -16,7 +16,7 @@ export default function Account() {
     id: '',
     user_id: '',
     display_name: '',
-    bio: ''
+    site_username: ''
   });
   const [newPassword, setNewPassword] = useState('');
 
@@ -37,14 +37,13 @@ export default function Account() {
         if (data) {
           setProfile(data);
         } else {
-          // Create profile if it doesn't exist
           const { data: newProfile, error: createError } = await supabase
             .from('profiles')
             .insert([
               {
                 user_id: user.id,
-                display_name: user.email?.split('@')[0] || 'Usuário',
-                bio: ''
+                display_name: user.email,
+                site_username: user.email?.split('@')[0] || 'usuario'
               }
             ])
             .select('*')
@@ -70,18 +69,16 @@ export default function Account() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não encontrado');
 
-      // Update profile
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
           display_name: profile.display_name,
-          bio: profile.bio
+          site_username: profile.site_username
         })
         .eq('user_id', user.id);
 
       if (profileError) throw profileError;
 
-      // Update password if provided
       if (newPassword) {
         const { error: passwordError } = await supabase.auth.updateUser({
           password: newPassword,
@@ -108,25 +105,25 @@ export default function Account() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Nome de Exibição
+                  Email
                 </label>
                 <input
-                  type="text"
-                  required
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  type="email"
+                  disabled
+                  className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   value={profile.display_name}
                   onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Bio
+                  Nome de Usuário
                 </label>
-                <textarea
+                <input
+                  type="text"
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  rows={3}
-                  value={profile.bio || ''}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                  value={profile.site_username || ''}
+                  onChange={(e) => setProfile({ ...profile, site_username: e.target.value })}
                 />
               </div>
               <div>
