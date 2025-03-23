@@ -3,6 +3,8 @@ import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Home, User, Calendar, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface Appointment {
   id: string;
