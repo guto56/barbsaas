@@ -1,22 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
-import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, isWeekend, getDay } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
 
-// Generate time slots from 13:00 to 19:00 with 50-minute intervals
-const AVAILABLE_HOURS = Array.from({ length: 8 }, (_, i) => {
+// Generate time slots for weekdays (13:00 to 19:00 with 50-minute intervals)
+const WEEKDAY_SLOTS = Array.from({ length: 8 }, (_, i) => {
   const hour = 13 + Math.floor(i * 50 / 60);
   const minute = (i * 50) % 60;
   return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
 });
 
+// Generate time slots for weekends (8:00 to 10:30 and 13:00 to 19:00)
+const WEEKEND_MORNING_SLOTS = Array.from({ length: 6 }, (_, i) => {
+  const hour = 8 + Math.floor(i * 30 / 60);
+  const minute = (i * 30) % 60;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
+
+const WEEKEND_AFTERNOON_SLOTS = Array.from({ length: 8 }, (_, i) => {
+  const hour = 13 + Math.floor(i * 50 / 60);
+  const minute = (i * 50) % 60;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
+
+const WEEKEND_SLOTS = [...WEEKEND_MORNING_SLOTS, ...WEEKEND_AFTERNOON_SLOTS];
+
 export default function Schedule() {
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState('');
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+
+  // Fetch booked slots when date is selected
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (!selectedDate) return;
+
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      const { data: appointments } = await supabase
+        .from('appointments')
+        .select('time')
+        .eq('date', formattedDate)
+        .eq('status', 'scheduled');
+
+      if (appointments) {
+        setBookedSlots(appointments.map(apt => apt.time));
+      }
+    };
+
+    fetchBookedSlots();
+  }, [selectedDate]);
+
+  // Update available slots when date is selected or booked slots change
+  useEffect(() => {
+    if (!selectedDate) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    const slots = isWeekend(selectedDate) ? WEEKEND_SLOTS : WEEKDAY_SLOTS;
+    setAvailableSlots(slots.filter(slot => !bookedSlots.includes(slot)));
+  }, [selectedDate, bookedSlots]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,19 +77,6 @@ export default function Schedule() {
 
     try {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-
-      // Check if the time slot is available
-      const { data: existingAppointment } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('date', formattedDate)
-        .eq('time', selectedTime)
-        .eq('status', 'scheduled')
-        .single();
-
-      if (existingAppointment) {
-        throw new Error('Este horário já está reservado');
-      }
 
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -59,7 +94,6 @@ export default function Schedule() {
       if (existingProfile) {
         profileId = existingProfile.id;
       } else {
-        // Create new profile if it doesn't exist
         const { data: newProfile, error: profileError } = await supabase
           .from('profiles')
           .insert([
@@ -75,7 +109,7 @@ export default function Schedule() {
         profileId = newProfile.id;
       }
 
-      // Create the appointment using the profile id
+      // Create the appointment
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert([
@@ -92,6 +126,7 @@ export default function Schedule() {
       toast.success('Agendamento realizado com sucesso!');
       setSelectedDate(undefined);
       setSelectedTime('');
+      setAvailableSlots([]);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -145,23 +180,35 @@ export default function Schedule() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Selecione o horário
-                </label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="">Selecione um horário</option>
-                  {AVAILABLE_HOURS.map((time) => (
-                    <option key={time} value={time}>
-                      {time}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              
+              {selectedDate && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selecione o horário
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {availableSlots.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => setSelectedTime(time)}
+                        className={`p-3 rounded-full text-sm font-medium transition-colors
+                          ${selectedTime === time 
+                            ? 'bg-gray-900 text-white hover:bg-gray-700' 
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
+                      >
+                        {time}
+                      </button>
+                    ))}
+                  </div>
+                  {availableSlots.length === 0 && (
+                    <p className="text-gray-500 text-sm mt-2">
+                      Não há horários disponíveis para esta data.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <button
                   type="submit"
