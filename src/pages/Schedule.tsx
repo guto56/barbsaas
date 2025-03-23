@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
-import { format, addDays, isBefore, startOfDay, isWeekend, getDay } from 'date-fns';
+import { format, addDays, isBefore, startOfDay, isWeekend, getDay, parseISO } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
@@ -40,6 +40,7 @@ export default function Schedule() {
     const fetchBookedSlots = async () => {
       if (!selectedDate) return;
 
+      // Format date in YYYY-MM-DD format for database query
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       const { data: appointments } = await supabase
         .from('appointments')
@@ -76,6 +77,7 @@ export default function Schedule() {
     setLoading(true);
 
     try {
+      // Format the date in YYYY-MM-DD format for database storage
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
 
       // Get the current user
@@ -109,7 +111,7 @@ export default function Schedule() {
         profileId = newProfile.id;
       }
 
-      // Create the appointment
+      // Create the appointment with the correct date
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert([
