@@ -6,7 +6,12 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
 
-const AVAILABLE_HOURS = Array.from({ length: 9 }, (_, i) => `${i + 14}:00`);
+// Generate time slots from 13:00 to 19:00 with 50-minute intervals
+const AVAILABLE_HOURS = Array.from({ length: 8 }, (_, i) => {
+  const hour = 13 + Math.floor(i * 50 / 60);
+  const minute = (i * 50) % 60;
+  return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+});
 
 export default function Schedule() {
   const [loading, setLoading] = useState(false);
