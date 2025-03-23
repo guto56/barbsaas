@@ -81,8 +81,12 @@ export default function Schedule() {
       // Format the date in YYYY-MM-DD format for database storage
       const formattedDate = format(startOfDayFn(selectedDate), 'yyyy-MM-dd');
 
-      // Check if the time slot is already booked
-      const { data: existingAppointment } = await supabase
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não encontrado');
+
+      // Iniciar uma transação
+      const { data: existingAppointment, error: checkError } = await supabase
         .from('appointments')
         .select('time')
         .eq('date', formattedDate)
@@ -90,15 +94,15 @@ export default function Schedule() {
         .eq('status', 'scheduled')
         .single();
 
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 é o código para "nenhum resultado encontrado"
+        throw checkError;
+      }
+
       if (existingAppointment) {
         toast.error('Este horário já foi reservado. Por favor, selecione outro horário.');
         setLoading(false);
         return;
       }
-
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não encontrado');
 
       // Get or create profile for the user
       const { data: existingProfile } = await supabase
@@ -127,7 +131,7 @@ export default function Schedule() {
         profileId = newProfile.id;
       }
 
-      // Create the appointment with the correct date
+      // Criar o agendamento com uma verificação adicional
       const { error: appointmentError } = await supabase
         .from('appointments')
         .insert([
@@ -137,22 +141,18 @@ export default function Schedule() {
             time: selectedTime,
             status: 'scheduled'
           },
-        ]);
+        ])
+        .select()
+        .single();
 
-      if (appointmentError) throw appointmentError;
-
-      // Enviar email de confirmação
-      const { error: emailError } = await supabase.functions.invoke('send-confirmation-email', {
-        body: {
-          email: user.email,
-          date: format(parseISO(formattedDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
-          time: selectedTime
+      if (appointmentError) {
+        if (appointmentError.message.includes('duplicate key value violates unique constraint "appointments_date_time_key"')) {
+          toast.error('Este horário já foi reservado por outra pessoa. Por favor, escolha outro horário disponível.');
+        } else {
+          throw appointmentError;
         }
-      });
-
-      if (emailError) {
-        console.error('Erro ao enviar email:', emailError);
-        // Não vamos mostrar erro para o usuário, pois a reserva já foi feita
+        setLoading(false);
+        return;
       }
 
       toast.success('Agendamento realizado com sucesso!');
@@ -160,7 +160,12 @@ export default function Schedule() {
       setSelectedTime('');
       setAvailableSlots([]);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Erro:', error);
+      if (error.message.includes('duplicate key value violates unique constraint "appointments_date_time_key"')) {
+        toast.error('Este horário já foi reservado por outra pessoa. Por favor, escolha outro horário disponível.');
+      } else {
+        toast.error('Ocorreu um erro ao realizar o agendamento. Por favor, tente novamente.');
+      }
     } finally {
       setLoading(false);
     }
