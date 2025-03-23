@@ -110,18 +110,19 @@ export default function Account() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Nome de Exibição
+                  Email
                 </label>
                 <input
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  type="email"
+                  disabled
+                  className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                   value={profile.display_name}
                   onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Bio
+                  Nome de Usuário
                 </label>
                 <textarea
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
