@@ -80,6 +80,21 @@ export default function Schedule() {
       // Format the date in YYYY-MM-DD format for database storage
       const formattedDate = format(startOfDayFn(selectedDate), 'yyyy-MM-dd');
 
+      // Check if the time slot is already booked
+      const { data: existingAppointment } = await supabase
+        .from('appointments')
+        .select('time')
+        .eq('date', formattedDate)
+        .eq('time', selectedTime)
+        .eq('status', 'scheduled')
+        .single();
+
+      if (existingAppointment) {
+        toast.error('Este horário já foi reservado. Por favor, selecione outro horário.');
+        setLoading(false);
+        return;
+      }
+
       // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não encontrado');
