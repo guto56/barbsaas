@@ -5,6 +5,7 @@ import { format, addDays, isBefore, startOfDay, isWeekend, getDay, parseISO, set
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import toast from 'react-hot-toast';
+import { ptBR } from 'date-fns/locale';
 
 // Generate time slots for weekdays (13:00 to 19:00 with 50-minute intervals)
 const WEEKDAY_SLOTS = Array.from({ length: 8 }, (_, i) => {
@@ -139,6 +140,20 @@ export default function Schedule() {
         ]);
 
       if (appointmentError) throw appointmentError;
+
+      // Enviar email de confirmação
+      const { error: emailError } = await supabase.functions.invoke('send-confirmation-email', {
+        body: {
+          email: user.email,
+          date: format(parseISO(formattedDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
+          time: selectedTime
+        }
+      });
+
+      if (emailError) {
+        console.error('Erro ao enviar email:', emailError);
+        // Não vamos mostrar erro para o usuário, pois a reserva já foi feita
+      }
 
       toast.success('Agendamento realizado com sucesso!');
       setSelectedDate(undefined);
