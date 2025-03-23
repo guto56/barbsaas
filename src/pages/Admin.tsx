@@ -10,7 +10,7 @@ interface Appointment {
   id: string;
   user_id: string;
   profiles: {
-    display_name: string;
+    name: string;
   };
   date: string;
   time: string;
@@ -24,7 +24,7 @@ interface AppointmentData {
   time: string;
   status: string;
   profiles: {
-    display_name: string;
+    name: string;
   }[];
 }
 
@@ -49,7 +49,7 @@ export default function Admin() {
           time,
           status,
           profiles:user_id (
-            display_name
+            name
           )
         `)
         .eq('status', 'scheduled')
@@ -61,7 +61,7 @@ export default function Admin() {
       const transformedAppointments = (appointmentsData as AppointmentData[]).map(apt => ({
         ...apt,
         profiles: {
-          display_name: apt.profiles[0]?.display_name || 'Sem nome'
+          name: apt.profiles[0]?.name || 'Sem nome'
         }
       }));
 
@@ -212,7 +212,7 @@ export default function Admin() {
                 >
                   <div>
                     <p className="text-gray-900 font-medium">
-                      Cliente: {appointment.profiles?.display_name || 'Sem nome'}
+                      Cliente: {appointment.profiles?.name || 'Sem nome'}
                     </p>
                     <p className="text-gray-600">
                       Data: {format(parseISO(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
