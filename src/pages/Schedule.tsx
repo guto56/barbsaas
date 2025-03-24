@@ -158,36 +158,6 @@ export default function Schedule() {
       setSelectedTime('');
       setAvailableSlots([]);
 
-      // Após criar o agendamento com sucesso, enviar os emails
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('bio, display_name')
-        .eq('user_id', user.id)
-        .single();
-
-      // Enviar emails de confirmação
-      const response = await fetch(
-        'https://[seu-projeto].supabase.co/functions/v1/send-confirmation-email',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-          },
-          body: JSON.stringify({
-            email: user.email,
-            date: format(selectedDate, 'dd/MM/yyyy'),
-            time: selectedTime,
-            clientName: profile?.bio || user.email
-          })
-        }
-      );
-
-      if (!response.ok) {
-        console.error('Erro ao enviar email de confirmação');
-        // Não mostrar erro para o usuário pois o agendamento já foi feito
-      }
-
     } catch (error: any) {
       console.error('Erro:', error);
       // Mostrar mensagem específica para erro de duplicação
