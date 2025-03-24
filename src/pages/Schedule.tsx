@@ -129,7 +129,7 @@ export default function Schedule() {
       }
 
       // Criar o agendamento com uma verificação adicional
-      const { error: appointmentError } = await supabase
+      const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')
         .insert([
           {
@@ -143,7 +143,7 @@ export default function Schedule() {
         .single();
 
       if (appointmentError) {
-        if (appointmentError.message.includes('duplicate key value violates unique constraint "appointments_date_time_key"')) {
+        if (appointmentError.message.includes('duplicate key value violates unique constraint')) {
           toast.error('Este horário já foi reservado por outra pessoa. Por favor, escolha outro horário disponível.');
         } else {
           throw appointmentError;
@@ -151,6 +151,12 @@ export default function Schedule() {
         setLoading(false);
         return;
       }
+
+      // Se chegou aqui, o agendamento foi criado com sucesso
+      toast.success('Agendamento realizado com sucesso!');
+      setSelectedDate(undefined);
+      setSelectedTime('');
+      setAvailableSlots([]);
 
       // Após criar o agendamento com sucesso, enviar os emails
       const { data: profile } = await supabase
@@ -161,7 +167,7 @@ export default function Schedule() {
 
       // Enviar emails de confirmação
       const response = await fetch(
-        'https://xpynjtqoymksngmbevpj.supabase.co/functions/v1/send-confirmation-email',
+        'https://[seu-projeto].supabase.co/functions/v1/send-confirmation-email',
         {
           method: 'POST',
           headers: {
@@ -179,18 +185,18 @@ export default function Schedule() {
 
       if (!response.ok) {
         console.error('Erro ao enviar email de confirmação');
+        // Não mostrar erro para o usuário pois o agendamento já foi feito
       }
 
-      toast.success('Agendamento realizado com sucesso!');
-      setSelectedDate(undefined);
-      setSelectedTime('');
-      setAvailableSlots([]);
     } catch (error: any) {
       console.error('Erro:', error);
-      if (error.message.includes('duplicate key value violates unique constraint "appointments_date_time_key"')) {
+      // Mostrar mensagem específica para erro de duplicação
+      if (error.message?.includes('duplicate key value violates unique constraint')) {
         toast.error('Este horário já foi reservado por outra pessoa. Por favor, escolha outro horário disponível.');
       } else {
-        toast.error('Ocorreu um erro ao realizar o agendamento. Por favor, tente novamente.');
+        // Se for outro tipo de erro, mostrar mensagem mais específica se possível
+        const errorMessage = error.message || 'Ocorreu um erro ao realizar o agendamento';
+        toast.error(errorMessage);
       }
     } finally {
       setLoading(false);
