@@ -78,10 +78,7 @@ export default function Schedule() {
     setLoading(true);
 
     try {
-      // Format the date in YYYY-MM-DD format for database storage
       const formattedDate = format(startOfDayFn(selectedDate), 'yyyy-MM-dd');
-
-      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não encontrado');
 
@@ -153,6 +150,35 @@ export default function Schedule() {
         }
         setLoading(false);
         return;
+      }
+
+      // Após criar o agendamento com sucesso, enviar os emails
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('bio, display_name')
+        .eq('user_id', user.id)
+        .single();
+
+      // Enviar emails de confirmação
+      const response = await fetch(
+        'https://xpynjtqoymksngmbevpj.supabase.co/functions/v1/send-confirmation-email',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          },
+          body: JSON.stringify({
+            email: user.email,
+            date: format(selectedDate, 'dd/MM/yyyy'),
+            time: selectedTime,
+            clientName: profile?.bio || user.email
+          })
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Erro ao enviar email de confirmação');
       }
 
       toast.success('Agendamento realizado com sucesso!');

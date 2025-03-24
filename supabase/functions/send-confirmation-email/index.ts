@@ -13,16 +13,16 @@ serve(async (req) => {
   }
 
   try {
-    const { email, date, time } = await req.json()
+    const { email, date, time, clientName } = await req.json()
+    const barberEmail = 'nexitlag@gmail.com'
 
-    // Criar cliente Supabase
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Enviar email usando o serviço de email do Supabase
-    const { error } = await supabaseClient.auth.admin.sendRawEmail({
+    // Email para o cliente
+    await supabaseClient.auth.admin.sendRawEmail({
       to: email,
       subject: 'Confirmação de Agendamento',
       html: `
@@ -40,10 +40,27 @@ serve(async (req) => {
       `
     })
 
-    if (error) throw error
+    // Email para o barbeiro
+    await supabaseClient.auth.admin.sendRawEmail({
+      to: barberEmail,
+      subject: 'Novo Agendamento',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Novo Agendamento Recebido</h2>
+          <p>Olá,</p>
+          <p>Você recebeu um novo agendamento!</p>
+          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
+            <p><strong>Cliente:</strong> ${clientName}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Data:</strong> ${date}</p>
+            <p><strong>Horário:</strong> ${time}</p>
+          </div>
+        </div>
+      `
+    })
 
     return new Response(
-      JSON.stringify({ message: 'Email enviado com sucesso' }),
+      JSON.stringify({ message: 'Emails enviados com sucesso' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
