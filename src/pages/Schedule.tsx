@@ -161,7 +161,7 @@ export default function Schedule() {
 
       // Enviar emails de confirmação
       const response = await fetch(
-        'https://[seu-projeto].supabase.co/functions/v1/send-confirmation-email',
+        'https://xpynjtqoymksngmbevpj.supabase.co/functions/v1/send-confirmation-email',
         {
           method: 'POST',
           headers: {
