@@ -96,17 +96,28 @@ export default function Admin() {
 
   const handleCancelAppointment = async (id: string) => {
     try {
-      const { error } = await supabase
+      // Primeiro atualiza o status para cancelled
+      const { error: updateError } = await supabase
         .from('appointments')
         .update({ status: 'cancelled' })
         .eq('id', id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
+      // Depois deleta o registro
+      const { error: deleteError } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+
+      // Remove o agendamento da lista local
       setAppointments(appointments.filter(app => app.id !== id));
-      toast.success('Agendamento cancelado com sucesso!');
+      toast.success('Agendamento cancelado e removido com sucesso!');
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Erro ao cancelar agendamento:', error);
+      toast.error('Erro ao cancelar agendamento');
     }
   };
 
