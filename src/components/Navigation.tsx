@@ -10,7 +10,7 @@ export default function Navigation() {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <Link to="/home" className="text-xl font-bold text-gray-900">
-                Barbearia
+                Souza.
               </Link>
             </div>
           </div>
