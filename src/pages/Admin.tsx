@@ -126,52 +126,35 @@ export default function Admin() {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      // Verificar se é uma imagem JPG/JPEG
-      if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
-        toast.error('Por favor, selecione apenas imagens JPG/JPEG');
-        return;
-      }
+      toast.loading('Enviando imagem...');
 
-      // Criar um nome único para o arquivo
-      const fileExt = 'jpg';
-      const fileName = `${Math.random()}-${Date.now()}.${fileExt}`;
-      const filePath = `public/${fileName}`; // Adicionar 'public/' no caminho
-
-      setLoading(true);
-
-      // Upload do arquivo para o storage
-      const { data, error: uploadError } = await supabase.storage
-        .from('images') // nome do bucket
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: 'image/jpeg'
-        });
+      // Upload simples
+      const fileName = `${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      // Obter a URL pública da imagem
+      // Get URL
       const { data: { publicUrl } } = supabase.storage
         .from('images')
-        .getPublicUrl(filePath);
+        .getPublicUrl(fileName);
 
-      // Salvar a referência no banco
+      // Save to gallery
       const { error: dbError } = await supabase
         .from('gallery')
-        .insert([{ 
-          image_url: publicUrl,
-          created_at: new Date().toISOString()
-        }]);
+        .insert([{ image_url: publicUrl }]);
 
       if (dbError) throw dbError;
 
+      toast.dismiss();
       toast.success('Imagem enviada com sucesso!');
       
     } catch (error: any) {
-      console.error('Erro ao fazer upload:', error);
+      toast.dismiss();
+      console.error('Erro detalhado:', error);
       toast.error('Erro ao enviar imagem');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -241,13 +224,13 @@ export default function Admin() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                Agendamentos
+                Painel Administrativo
               </h2>
               <div className="flex gap-4">
-                <label className="cursor-pointer px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                <label className="cursor-pointer px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg"
                     className="hidden"
                     onChange={handleImageUpload}
                   />

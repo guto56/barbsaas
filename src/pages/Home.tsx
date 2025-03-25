@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Home as HomeIcon, User, Calendar, LogOut } from 'lucide-react';
+import { Home as HomeIcon, User, Calendar, LogOut, Image } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -116,6 +116,12 @@ export default function HomePage() {
               >
                 <Calendar className="h-5 w-5" />
               </Link>
+              <Link
+                to="/gallery"
+                className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
+              >
+                <Image className="h-5 w-5" />
+              </Link>
               <button
                 onClick={handleLogout}
                 className="inline-flex items-center px-1 pt-1 text-gray-900 hover:text-gray-700"
@@ -157,6 +163,45 @@ export default function HomePage() {
                   Você não tem nenhum agendamento marcado.
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Outras opções:
+            </h2>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <button
+                onClick={() => navigate('/schedule')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <Calendar className="w-6 h-6 mr-2" />
+                <span>Agendar Horário</span>
+              </button>
+              <button
+                onClick={() => navigate('/gallery')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <Image className="w-6 h-6 mr-2" />
+                <span>Galeria</span>
+              </button>
+              <button
+                onClick={() => navigate('/account')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <User className="w-6 h-6 mr-2" />
+                <span>Minha Conta</span>
+              </button>
+              <button
+                onClick={() => navigate('/login')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <LogOut className="w-6 h-6 mr-2" />
+                <span>Sair</span>
+              </button>
             </div>
           </div>
         </div>

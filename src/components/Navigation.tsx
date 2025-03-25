@@ -33,6 +33,12 @@ export default function Navigation() {
             >
               <Calendar className="h-5 w-5" />
             </Link>
+            <Link
+              to="/gallery"
+              className="text-gray-900 hover:text-gray-700"
+            >
+              Galeria
+            </Link>
           </div>
         </div>
       </div>

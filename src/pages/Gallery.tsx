@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
+import toast from 'react-hot-toast';
 
 interface GalleryImage {
   id: string;
@@ -18,15 +19,24 @@ export default function Gallery() {
 
   const fetchImages = async () => {
     try {
+      // Primeiro, vamos logar para debug
+      console.log('Buscando imagens...');
+      
       const { data, error } = await supabase
         .from('gallery')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar imagens:', error);
+        throw error;
+      }
+
+      console.log('Imagens encontradas:', data);
       setImages(data || []);
     } catch (error) {
       console.error('Erro ao carregar imagens:', error);
+      toast.error('Erro ao carregar imagens');
     } finally {
       setLoading(false);
     }
@@ -43,18 +53,22 @@ export default function Gallery() {
             </h2>
             
             {loading ? (
-              <div className="text-center">Carregando...</div>
+              <div className="text-center py-4">Carregando...</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {images.map((image) => (
                   <div
                     key={image.id}
-                    className="relative aspect-square rounded-lg overflow-hidden"
+                    className="relative aspect-square rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
                   >
                     <img
                       src={image.image_url}
                       alt="Foto da galeria"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        console.error('Erro ao carregar imagem:', image.image_url);
+                        e.currentTarget.src = 'https://via.placeholder.com/300?text=Erro+ao+carregar';
+                      }}
                     />
                   </div>
                 ))}
@@ -62,7 +76,7 @@ export default function Gallery() {
             )}
 
             {!loading && images.length === 0 && (
-              <p className="text-center text-gray-500">
+              <p className="text-center text-gray-500 py-4">
                 Nenhuma foto na galeria ainda.
               </p>
             )}
