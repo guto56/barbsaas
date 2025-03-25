@@ -93,10 +93,11 @@ export default function ChatSchedule() {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer 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',
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Barbearia App'
+          'X-Title': 'Barbearia App',
+          'OR-Organization': 'personal-' + window.location.host
         },
         body: JSON.stringify({
-          model: 'deepseek/deepseek-r1:free',
+          model: 'deepseek-ai/deepseek-70b-base',
           messages: [
             {
               role: "system",
@@ -108,7 +109,8 @@ export default function ChatSchedule() {
             },
             ...messages,
             { role: 'user', content: userMessage }
-          ]
+          ],
+          temperature: 0.7
         })
       });
 
