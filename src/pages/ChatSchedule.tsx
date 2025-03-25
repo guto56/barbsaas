@@ -93,8 +93,7 @@ export default function ChatSchedule() {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer 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',
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Barbearia App',
-          'OR-Organization': 'personal-' + window.location.host
+          'X-Title': 'Barbearia App'
         },
         body: JSON.stringify({
           model: 'deepseek-ai/deepseek-70b-base',
