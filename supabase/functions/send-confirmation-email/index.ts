@@ -17,8 +17,8 @@ serve(async (req) => {
     const barberEmail = 'nexitlag@gmail.com'
 
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_URL') || '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
     )
 
     // Email para o cliente
