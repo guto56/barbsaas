@@ -126,15 +126,27 @@ export default function Admin() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      // Verificar se é uma imagem JPG/JPEG
+      if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
+        toast.error('Por favor, selecione apenas imagens JPG/JPEG');
+        return;
+      }
+
       // Criar um nome único para o arquivo
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `gallery/${fileName}`;
+      const fileExt = 'jpg';
+      const fileName = `${Math.random()}-${Date.now()}.${fileExt}`;
+      const filePath = `public/${fileName}`; // Adicionar 'public/' no caminho
+
+      setLoading(true);
 
       // Upload do arquivo para o storage
-      const { error: uploadError } = await supabase.storage
-        .from('images')
-        .upload(filePath, file);
+      const { data, error: uploadError } = await supabase.storage
+        .from('images') // nome do bucket
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -146,14 +158,20 @@ export default function Admin() {
       // Salvar a referência no banco
       const { error: dbError } = await supabase
         .from('gallery')
-        .insert([{ image_url: publicUrl }]);
+        .insert([{ 
+          image_url: publicUrl,
+          created_at: new Date().toISOString()
+        }]);
 
       if (dbError) throw dbError;
 
       toast.success('Imagem enviada com sucesso!');
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error('Erro ao fazer upload:', error);
       toast.error('Erro ao enviar imagem');
+    } finally {
+      setLoading(false);
     }
   };
 
