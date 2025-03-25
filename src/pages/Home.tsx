@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Home as HomeIcon, User, Calendar, LogOut } from 'lucide-react';
+import { Home as HomeIcon, User, Calendar, LogOut, MessageSquare } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
@@ -157,6 +157,29 @@ export default function HomePage() {
                   Você não tem nenhum agendamento marcado.
                 </p>
               )}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <button
+                onClick={() => navigate('/schedule')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <Calendar className="w-6 h-6 mr-2" />
+                <span>Agendar Horário</span>
+              </button>
+              <button
+                onClick={() => navigate('/chat-schedule')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <MessageSquare className="w-6 h-6 mr-2" />
+                <span>Agendar via Chat</span>
+              </button>
+              <button
+                onClick={() => navigate('/account')}
+                className="flex items-center justify-center p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              >
+                <User className="w-6 h-6 mr-2" />
+                <span>Minha Conta</span>
+              </button>
             </div>
           </div>
         </div>

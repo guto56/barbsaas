@@ -87,15 +87,16 @@ export default function ChatSchedule() {
     setLoading(true);
 
     try {
-      // Chamar a API do DeepSeek
-      const response = await fetch(process.env.REACT_APP_DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions', {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.REACT_APP_DEEPSEEK_API_KEY}`
+          'Authorization': 'Bearer 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',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Barbearia App'
         },
         body: JSON.stringify({
-          model: "deepseek-chat",
+          model: 'deepseek/deepseek-r1:free',
           messages: [
             {
               role: "system",
@@ -112,23 +113,28 @@ export default function ChatSchedule() {
       });
 
       const data = await response.json();
+      console.log('API Response:', data);
+
+      if (!data.choices?.[0]?.message?.content) {
+        throw new Error('Resposta inválida da API');
+      }
+
       const assistantMessage = data.choices[0].message.content;
 
-      // Verificar se a mensagem contém um comando de agendamento
       if (assistantMessage.startsWith('AGENDAR:')) {
         const [, dateTime] = assistantMessage.split(':');
         const [date, time] = dateTime.trim().split(' ');
         
-        // Converter a data do formato DD/MM/YYYY para YYYY-MM-DD
+        const formattedTime = time.includes(':') ? time : `${time}:00`;
+        
         const [day, month, year] = date.split('/');
         const formattedDate = `${year}-${month}-${day}`;
 
-        // Verificar se o horário já está reservado
         const { data: existingAppointment } = await supabase
           .from('appointments')
           .select('time')
           .eq('date', formattedDate)
-          .eq('time', time)
+          .eq('time', formattedTime)
           .eq('status', 'scheduled')
           .single();
 
@@ -139,11 +145,9 @@ export default function ChatSchedule() {
           return;
         }
 
-        // Obter o usuário atual
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuário não encontrado');
 
-        // Obter ou criar perfil do usuário
         const { data: existingProfile } = await supabase
           .from('profiles')
           .select('id')
@@ -170,14 +174,13 @@ export default function ChatSchedule() {
           profileId = newProfile.id;
         }
 
-        // Criar o agendamento
         const { error: appointmentError } = await supabase
           .from('appointments')
           .insert([
             {
               user_id: profileId,
               date: formattedDate,
-              time: time,
+              time: formattedTime,
               status: 'scheduled'
             },
           ]);
@@ -192,7 +195,7 @@ export default function ChatSchedule() {
         await saveMessage('assistant', assistantMessage);
       }
     } catch (error: any) {
-      console.error('Erro:', error);
+      console.error('Erro detalhado:', error);
       const errorMessage = 'Desculpe, ocorreu um erro ao processar sua solicitação. Por favor, tente novamente.';
       setMessages(prev => [...prev, { role: 'assistant', content: errorMessage }]);
       await saveMessage('assistant', errorMessage);
