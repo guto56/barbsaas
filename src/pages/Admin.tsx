@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Scissors } from 'lucide-react';
+import { Scissors, Upload } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -121,6 +121,42 @@ export default function Admin() {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      // Criar um nome único para o arquivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `gallery/${fileName}`;
+
+      // Upload do arquivo para o storage
+      const { error: uploadError } = await supabase.storage
+        .from('images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Obter a URL pública da imagem
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(filePath);
+
+      // Salvar a referência no banco
+      const { error: dbError } = await supabase
+        .from('gallery')
+        .insert([{ image_url: publicUrl }]);
+
+      if (dbError) throw dbError;
+
+      toast.success('Imagem enviada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast.error('Erro ao enviar imagem');
+    }
+  };
+
   if (!authenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -189,12 +225,24 @@ export default function Admin() {
               <h2 className="text-2xl font-bold text-gray-900">
                 Agendamentos
               </h2>
-              <button
-                onClick={() => navigate('/login')}
-                className="text-sm font-medium text-gray-900 hover:text-gray-700"
-              >
-                Sair
-              </button>
+              <div className="flex gap-4">
+                <label className="cursor-pointer px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                  <Upload className="w-5 h-5 inline-block mr-2" />
+                  Adicionar Foto
+                </label>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="text-sm font-medium text-gray-900 hover:text-gray-700"
+                >
+                  Sair
+                </button>
+              </div>
             </div>
             <div className="space-y-4">
               {appointments.map((appointment) => (
