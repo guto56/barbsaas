@@ -13,15 +13,8 @@ export default function Gallery() {
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchImages();
-  }, []);
-
   const fetchImages = async () => {
     try {
-      // Primeiro, vamos logar para debug
-      console.log('Buscando imagens...');
-      
       const { data, error } = await supabase
         .from('gallery')
         .select('*')
@@ -32,7 +25,6 @@ export default function Gallery() {
         throw error;
       }
 
-      console.log('Imagens encontradas:', data);
       setImages(data || []);
     } catch (error) {
       console.error('Erro ao carregar imagens:', error);
@@ -41,6 +33,19 @@ export default function Gallery() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Buscar dados imediatamente
+    fetchImages();
+
+    // Configurar intervalo para atualizações periódicas (1 segundo)
+    const intervalId = setInterval(fetchImages, 1000);
+
+    // Limpar intervalo ao desmontar
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []); // Array vazio significa que o efeito roda apenas uma vez ao montar
 
   return (
     <div className="min-h-screen bg-gray-50">
