@@ -37,8 +37,9 @@ export default function Navigation() {
               to="/gallery"
               className="text-gray-900 hover:text-gray-700"
             >
-  
             </Link>
+
+            
           </div>
         </div>
       </div>
