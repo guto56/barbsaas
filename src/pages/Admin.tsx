@@ -81,10 +81,8 @@ export default function Admin() {
     setLoading(true);
 
     try {
-      const adminUsername = process.env.REACT_APP_ADMIN_USERNAME; 
-      const adminPassword = process.env.REACT_APP_ADMIN_PASSWORD;
 
-      if (formData.username !== adminUsername || formData.password !== adminPassword) {
+      if (formData.username !== 'adminbarber' || formData.password !== 'byguto') {
         throw new Error('Credenciais inválidas');
       }
 
